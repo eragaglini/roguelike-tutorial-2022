@@ -1,5 +1,6 @@
-from typing import Iterable, Any
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from tcod.context import Context
 from tcod.console import Console
 from tcod.map import compute_fov
@@ -8,28 +9,23 @@ from entity import Entity
 from game_map import GameMap
 from input_handlers import EventHandler
 
+if TYPE_CHECKING:
+    from entity import Entity
+    from game_map import GameMap
+
 
 class Engine:
-    def __init__(self, event_handler: EventHandler, game_map: GameMap, player: Entity):
-        self.event_handler = event_handler        
-        self.game_map = game_map
+    # https://stackoverflow.com/questions/39971929/what-are-variable-annotations
+    game_map: GameMap
+
+    def __init__(self, player: Entity):
+        self.event_handler: EventHandler = EventHandler(self)
         self.player = player
-        self.update_fov()
 
     def handle_enemy_turns(self) -> None:
-        for entity in self.game_map.entities - {self.player}:
-            print(f'The {entity.name} wonders when it will get to take a real turn.')
-
-    def handle_events(self, events: Iterable[Any]) -> None:
-        for event in events:
-            action = self.event_handler.dispatch(event)
-
-            if action is None:
-                continue
-            
-            action.perform(self, self.player)
-            self.handle_enemy_turns()
-            self.update_fov()  # Update the FOV before the players next action.
+        for entity in set(self.game_map.actors) - {self.player}:
+            if entity.ai:
+                entity.ai.perform()
 
     def update_fov(self) -> None:
         """Recompute the visible area based on the players point of view."""
@@ -40,7 +36,6 @@ class Engine:
         )
         # If a tile is "visible" it should be added to "explored".
         self.game_map.explored |= self.game_map.visible
-
 
     def render(self, console: Console, context: Context) -> None:
         self.game_map.render(console)
