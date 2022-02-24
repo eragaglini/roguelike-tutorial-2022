@@ -7,19 +7,22 @@ from tcod.map import compute_fov
 
 from entity import Entity
 from game_map import GameMap
-from input_handlers import EventHandler
+from input_handlers import MainGameEventHandler
 
 if TYPE_CHECKING:
-    from entity import Entity
+    from entity import Actor
     from game_map import GameMap
+    from input_handlers import EventHandler
 
 
 class Engine:
     # https://stackoverflow.com/questions/39971929/what-are-variable-annotations
     game_map: GameMap
-
-    def __init__(self, player: Entity):
-        self.event_handler: EventHandler = EventHandler(self)
+    def __init__(self, player: Actor):
+        # in pratica nel momento in cui iniziamo la partita, a gestire gli eventi 
+        # ci pensa il MainGameEventHandler. Quando perdiamo a self.event_handler viene 
+        # assegnato GameOverEventHandler
+        self.event_handler: EventHandler = MainGameEventHandler(self)
         self.player = player
 
     def handle_enemy_turns(self) -> None:
@@ -39,5 +42,10 @@ class Engine:
 
     def render(self, console: Console, context: Context) -> None:
         self.game_map.render(console)
+        console.print(
+            x=1,
+            y=47,
+            string=f"HP: {self.player.fighter.hp}/{self.player.fighter.max_hp}",
+        )
         context.present(console)
         console.clear()

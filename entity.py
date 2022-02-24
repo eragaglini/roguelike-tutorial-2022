@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING
 
+from render_order import RenderOrder
 
 if TYPE_CHECKING:
     from components.ai import BaseAI
@@ -32,6 +33,9 @@ class Entity:
         # Enemies will have blocks_movement set to True, while in the future, things like 
         # consumable items and equipment will be set to False.
         blocks_movement: bool = False,
+        # We’re now passing the render order to the Entity class, with a default of CORPSE. 
+        # Notice that we don’t pass it to Actor, and instead, assume that the actor’s default will be the ACTOR value.
+        render_order: RenderOrder = RenderOrder.CORPSE,
     ):
         self.x = x
         self.y = y
@@ -39,6 +43,7 @@ class Entity:
         self.color = color
         self.name = name
         self.blocks_movement = blocks_movement
+        self.render_order = render_order
         if gamemap:
             # If gamemap isn't provided now then it will be set later.
             self.gamemap = gamemap
@@ -99,6 +104,7 @@ class Actor(Entity):
             color=color,
             name=name,
             blocks_movement=True,
+            render_order=RenderOrder.ACTOR,
         )
 
         self.ai: Optional[BaseAI] = ai_cls(self)
